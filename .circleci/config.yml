@@ -16,7 +16,7 @@ jobs:
                   "fields": [
                     {
                       "type": "plain_text",
-                      "text": "*This is a text notification*",
+                      "text": "*Text notification*",
                       "emoji": true
                     }
                   ]
@@ -102,7 +102,7 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm audit --audit-level=critical --force
+            npm audit fix --audit-level=critical --force
       
   scan-backend:
     docker:
