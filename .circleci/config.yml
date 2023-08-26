@@ -1,6 +1,27 @@
 version: 2.1
 orbs:
   slack: circleci/slack@4.12.5
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      # Add parameter here
+      back_end:
+        default: "backend${CIRCLE_WORKFLOW_ID:0:7}"
+        type: string
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            #aws --version
+            echo "DESTROY STACKS"
+            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            aws cloudformation delete-stack --stack-name backend${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name frontend${CIRCLE_WORKFLOW_ID:0:7}
+            echo "${CIRCLE_WORKFLOW_ID:0:7}"
+            echo "Destroyed ?????"
+            #exit 1
             
 jobs:
   notify:
@@ -150,19 +171,7 @@ jobs:
             cp inventory.txt ~/project/backend
             ls ~/project/backend
 
-      - persist_to_workspace:
-          root: ~/project/
-          paths:
-            - backend/inventory.txt
-
-      #Store
-      - run:
-          name: Backend ID
-          command: |
-            curl -H "Content-Type: text/plain" -H "token: ab-${CIRCLE_WORKFLOW_ID}" --request PUT --data "$serverIP" https://api.memstash.io/values/backendip
-            cat ~/project/.circleci/ansible/inventory.txt
-            pwd
-
+      
       #Frontend deploy infra
       - run:
           name: Ensure front-end infrastructure exist
@@ -170,11 +179,11 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/frontend.yml \
             --tags Project=udapeople \
-            --stack-name "frntend${CIRCLE_WORKFLOW_ID:0:7}" \
+            --stack-name "frontend${CIRCLE_WORKFLOW_ID:0:7}" \
             --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
 
       # Here's where you will add some code to rollback on failure
-      # - destroy-environment
+      - destroy-environment
 
 
 workflows:
