@@ -204,7 +204,7 @@ jobs:
             cd ~/project/.circleci/ansible/
             pwd
             ls -al ~/project/backend
-            cat ~/project/backend/inventory.txt
+            cat ~/project/.circleci/ansible/inventory.txt
 
       - run:
           name: add values to backend/.env files
