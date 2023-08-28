@@ -259,7 +259,11 @@ jobs:
           command: |
             cd backend
             npm install
-            npm run migrations > migrations_dump.txt
+            npm run build
+
+            echo 'DUMP MIGRATIONS'
+            echo "PWD: " $(pwd)
+            npm run migrations >> ~/project/backend/migrations_dump.txt
 
             echo 'DISPLAY CONTENTS'
             echo '*****************'
