@@ -259,6 +259,9 @@ jobs:
           command: |
             cd backend
             npm install
+            npm install reflect-metadata@0.1.12
+            npm install ajv@^6.9.1
+            npm install winston@2.x.x
             npm run build
 
             echo 'DUMP MIGRATIONS'
