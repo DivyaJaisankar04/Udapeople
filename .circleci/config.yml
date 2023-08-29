@@ -341,6 +341,37 @@ jobs:
       # Here's where you will add some code to rollback on failure
       - destroy-environment
 
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["b0:ab:13:47:6a:42:74:43:00:96:b4:0f:b0:62:ec:c2"]
+
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+            apk add --update ansible
+            pip install awscli
+            apk add --update nodejs npm
+            apk add --no-cache bash
+            apk add --update tar gzip ansible nodejs npm curl jq
+            apk add openssh-client
+
+            ls -la ~/project/frontend/
+            aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=udapeople" --output text >> ~/project/.circleci/ansible/inventory.txt
+
+            pwd
+            #tar -czvf backend.tgz /root/project/backend
+            ls -la
+
+
+      - run: cat ~/project/.circleci/ansible/inventory.txt
+
 workflows:
   default:
     jobs:
