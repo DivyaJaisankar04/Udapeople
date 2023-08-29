@@ -269,10 +269,6 @@ jobs:
             echo '*****************'
             cat migrations_dump.txt
             echo '-----------------'
-            #ls -la
-            #echo "running migrations!!!!!!"
-            #npm run migrations
-            #cat  /home/circleci/project/backend/migrations_dump.txt
 
       - run:
           name: Send migration results to memstash
