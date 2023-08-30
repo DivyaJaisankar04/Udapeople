@@ -259,7 +259,7 @@ jobs:
           at: ~/project/
 
       - run:
-          name: Install extra apps
+          name: Install dependencies
           command: |
             cd ~/project/frontend
             apk add --no-cache nodejs
