@@ -19,9 +19,14 @@
         timeout: 120
 
     - name: "install python for Ansible."
+      apt:
+        name: python3
+        state: latest
+        update_cache: yes
+      
       # Your code here
-      raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3)
-      changed_when: false
+      #raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3)
+      #changed_when: false
   environment:
     - TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION')}}"  
     - TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
