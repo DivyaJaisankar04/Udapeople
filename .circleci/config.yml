@@ -302,7 +302,7 @@ jobs:
             export API_DNS="http://${BACKENDDNS}:3030"
             echo "API_URL=http://${BACKENDIP}:3030" >> frontend/.env
             cat ~/project/frontend/.env
-      - restore-cache:
+      - restore_cache:
           keys: [frontend-build]
       - run:
           name: Deploy frontend objects
