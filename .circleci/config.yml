@@ -218,13 +218,15 @@ jobs:
 
   run-migrations:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: node:13.8-buster
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip nodejs npm aws-cli curl
+            apt update
+            apt-get -y install curl
+            apt-get -y install awscli
       - restore_cache:
           keys: [backend-build]
 
