@@ -172,13 +172,6 @@ jobs:
           paths:
             - inventory.txt
 
-      #Store
-      - run:
-          name: Backend ID
-          command: |
-            curl -H "Content-Type: text/plain" -H "token: ab-${CIRCLE_WORKFLOW_ID}" --request PUT --data "$serverIP" https://api.memstash.io/values/backendip
-            cat ~/project/.circleci/ansible/inventory.txt
-            pwd
 
       #Frontend deploy infra
       - run:
