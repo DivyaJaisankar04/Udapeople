@@ -418,7 +418,7 @@ jobs:
                     else
                         exit 1
                     fi
-            - destroy_environment
+            - destroy-environment
 
 workflows:
   default:
