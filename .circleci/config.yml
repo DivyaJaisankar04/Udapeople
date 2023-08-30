@@ -140,23 +140,14 @@ jobs:
             npm audit fix --audit-level=critical --force
   deploy-infrastructure:
     docker:
-      - image: node:13.8-buster
+      - image: amazon/aws-cli
 
     steps:
       # Checkout code from git
       - checkout
-      - run: 
-          name: Update packages
-          command: |
-            apt update
-      - run: 
-          name: Install tar and gzip
-          command: |
-            apt-get -y install tar gzip
-      - run:
-          name: Install dependencies (AWS-Cli)
-          command: |
-            apt-get -y install awscli
+      - run: yum -y install tar gzip jq npm
+      - run: yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm jq
+
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -164,14 +155,36 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/backend.yml \
             --tags Project=udapeople \
-            --stack-name "backend${CIRCLE_WORKFLOW_ID:0:7}" \
-            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+            --stack-name "bckend${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --region=us-west-2
+
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            cd ~/project/.circleci/ansible/
+
+            SERVER_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Project,Values=udapeople" --output text)
+
+            echo $SERVER_IP >> inventory.txt
+            cat inventory.txt
+            ls ~/project/backend
+            cp inventory.txt ~/project/backend
+            ls ~/project/backend
 
       - persist_to_workspace:
           root: ~/project/
           paths:
             - backend/inventory.txt
-            
+
+      #Store
+      - run:
+          name: Backend ID
+          command: |
+            curl -H "Content-Type: text/plain" -H "token: ab-${CIRCLE_WORKFLOW_ID}" --request PUT --data "$serverIP" https://api.memstash.io/values/backendip
+            cat ~/project/.circleci/ansible/inventory.txt
+            pwd
+
       #Frontend deploy infra
       - run:
           name: Ensure front-end infrastructure exist
@@ -179,20 +192,10 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/frontend.yml \
             --tags Project=udapeople \
-            --stack-name "frontend${CIRCLE_WORKFLOW_ID:0:7}" \
-            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --output text >> .circleci/ansible/inventory.txt
-           
-      - persist_to_workspace:
-                root: .circleci/ansible/
-                paths:
-                    - inventory.txt
+            --stack-name "frntend${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --region=us-west-2
+
       # Here's where you will add some code to rollback on failure
       - destroy-environment
 
