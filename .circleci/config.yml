@@ -327,6 +327,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["b0:ab:13:47:6a:42:74:43:00:96:b4:0f:b0:62:ec:c2"]
 
+
       - run:
           name: Install dependencies
           command: |
@@ -337,27 +338,29 @@ jobs:
             apk add --no-cache bash
             apk add --update tar gzip ansible nodejs npm curl jq
             apk add openssh-client
-
-            ls -la ~/project/frontend/
-            aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=udapeople" --output text >> ~/project/.circleci/ansible/inventory.txt
-
-            pwd
-            #tar -czvf backend.tgz /root/project/backend
-            ls -la
-
+            
+      - attach_workspace:
+          at: ~/project/
+      - restore_cache:
+          keys: [backend-build]
+          
       - run: cat ~/project/.circleci/ansible/inventory.txt
       - run:
           name: Deploy backend
-          no_output_timeout: 10m
           command: |
-            printenv >> /root/project/backend/.env
-            cat /root/project/backend/.env
-            tar -czvf backend.tgz ./backend
+            cd backend
+            npm install
+            npm run build
+            cd ..
+            tar -c backend -czvf artifact.tar.gz
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            cd .circleci/ansible
+            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
 
-            cd /root/project/.circleci/ansible
-            aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Project,Values=udapeople" --output text >> inventory.txt
-            cat /root/project/.circleci/ansible/inventory.txt
             ansible-playbook -i /root/project/.circleci/ansible/inventory.txt /root/project/.circleci/ansible/deploy-backend.yml
+    - destroy-environment
+    - revert-migrations
   smoke-test:
         docker:
             - image: node:13.8-buster
