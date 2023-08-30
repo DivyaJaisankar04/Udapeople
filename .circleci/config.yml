@@ -170,7 +170,11 @@ jobs:
             ls ~/project/backend
             cp inventory.txt ~/project/backend
             ls ~/project/backend
-
+            
+      - persist_to_workspace:
+                root: .circleci/ansible/
+                paths:
+                    - inventory.txt
       
       #Frontend deploy infra
       - run:
