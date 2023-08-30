@@ -1,0 +1,77 @@
+---
+- name: "Update packages."
+  become: true
+  apt:
+    force_apt_get: yes
+    update_cache : true
+
+- name: Install nodejs prerequisites
+  apt:
+    name:
+      - apt-transport-https
+      - gcc
+      - g++
+      - make
+    state: present
+
+# - name: "install nodejs and npm"
+#   become: yes
+#   apt:
+#     name: ["nodejs", "npm"]
+#     state: latest
+#     update_cache: yes
+
+# - name: "install n"
+#   become: yes
+#   npm:
+#     name: n
+#     global: yes
+#     production: yes
+
+# - name: "install nodejs 13.8.0"
+#   become: yes
+#   shell: n 13.8.0
+
+# - name: "Setup NodeSource"
+#   become: yes
+#   shell: |
+#     curl -sL https://deb.nodesource.com/setup_13.x | bash -
+
+# - name: "Install Node.js"
+#   become: yes
+#   apt:
+#     name: ["nodejs"]
+#     state: latest
+#     update_cache: yes
+
+- name: "install nvm"
+  become: yes
+  shell: |
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+  args:
+    creates: /root/.nvm/nvm.sh
+
+- name: "install nodejs 13.8.0"
+  become: yes
+  shell: |
+    . /root/.nvm/nvm.sh
+    nvm install 13.8.0
+    nvm use 13.8.0
+    nvm alias default 13.8.0
+    node -v
+    npm -v
+
+
+# - name: "Install pm2"
+#   become: true
+#   npm:
+#     name: pm2
+#     global: yes
+#     production: yes
+#     state: present
+
+- name: "Install pm2"
+  become: true
+  shell: |
+    . /root/.nvm/nvm.sh
+    npm install -g pm2
