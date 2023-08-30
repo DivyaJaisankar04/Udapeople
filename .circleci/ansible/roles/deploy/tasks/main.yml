@@ -1,0 +1,58 @@
+---
+
+- name: "Ship tar file to ec2 instance and extract it"
+  unarchive:
+    src: /root/project/artifact.tar.gz
+    dest: ~/
+
+# - name: "Install backend server's package."
+#   npm:
+#     path: ~/
+- name: "Install backend server's package."
+  become: true
+  shell: |
+    . /root/.nvm/nvm.sh
+    npm install
+  args:
+    chdir: ~/
+
+# - name: "Stop currently running app"
+#   ignore_errors: true
+#   shell: |
+#     pm2 stop server
+- name: "Stop currently running app"
+  become: true
+  ignore_errors: true
+  shell: |
+    . /root/.nvm/nvm.sh
+    pm2 stop server
+
+# - name: "Start the app"
+#   shell: |
+#     pm2 start npm -- start --name server
+#     pm2 save
+- name: "Start the app"
+  become: true
+  shell: |
+    . /root/.nvm/nvm.sh
+    pm2 start npm -- start --name server
+    pm2 save
+
+# - name: "Set pm2 to start on boot"
+#   become: true
+#   shell: |
+#     pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
+- name: "Check env TYPEORM_ENTITIES"
+  command: 'echo $TYPEFORM_ENTITES'
+  register: output1
+
+- name: "Check env TYPEORM_CONNECTION"
+  command: 'echo $TYPEFORM_CONNECTION'
+  register: output2
+
+- name: "Debug"
+  debug:
+    msg:
+      - "{{ output1.stdout }}"
+      - "{{ output2.stdout }}"
