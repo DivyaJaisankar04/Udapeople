@@ -167,7 +167,11 @@ jobs:
             --stack-name "backend${CIRCLE_WORKFLOW_ID:0:7}" \
             --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
 
-      
+      - persist_to_workspace:
+          root: ~/project/
+          paths:
+            - backend/inventory.txt
+            
       #Frontend deploy infra
       - run:
           name: Ensure front-end infrastructure exist
@@ -376,9 +380,19 @@ jobs:
             #tar -czvf backend.tgz /root/project/backend
             ls -la
 
-
       - run: cat ~/project/.circleci/ansible/inventory.txt
+      - run:
+          name: Deploy backend
+          no_output_timeout: 10m
+          command: |
+            printenv >> /root/project/backend/.env
+            cat /root/project/backend/.env
+            tar -czvf backend.tgz ./backend
 
+            cd /root/project/.circleci/ansible
+            aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Project,Values=udapeople" --output text >> inventory.txt
+            cat /root/project/.circleci/ansible/inventory.txt
+            ansible-playbook -i /root/project/.circleci/ansible/inventory.txt /root/project/.circleci/ansible/deploy-backend.yml
   smoke-test:
         docker:
             - image: node:13.8-buster
