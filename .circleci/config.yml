@@ -372,97 +372,53 @@ jobs:
 
       - run: cat ~/project/.circleci/ansible/inventory.txt
 
-  smoke-test-backend:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      # Checkout code from git
-      - checkout
+  smoke-test:
+        docker:
+            - image: node:13.8-buster
+        steps:
+            - checkout
+            - run:
+                name: Update packages
+                command: |
+                    apt update
+            - run:
+                name: Install dependencies (Curl)
+                command: |
+                    apt-get -y install curl
+            - run:
+                name: Install dependencies (AWS-Cli)
+                command: |
+                    apt-get -y install awscli
+            - run:
+                name: Backend smoke test.
+                command: |
+                    BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+                    echo "Backend-ip: ${BACKEND_IP}"
+                    API_URL="http://${BACKEND_IP}:3030"
+                    echo "API URL: ${API_URL}"
 
-      - attach_workspace:
-          at: ~/project/
-
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-            cd ~/project/backend
-            apk add --update ansible
-            apk add --update tar gzip ansible nodejs npm curl jq
-            pip install awscli
-            #apk add --no-cache \
-            #python3 \
-            #py3-pip \
-            #&& pip3 install --upgrade pip \
-            #&& pip3 install \
-            #awscli \
-            #&& rm -rf /var/cache/apk/*
-            cd ~/project/backend/
-            pwd
-            ls -la
-
-      - run:
-          name: Get backend url and do some test
-          command: |
-            # your code here
-            cd ~/project/backend
-            touch .env
-            export BACKENDIP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
-            export BACKENDDNS=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
-
-            echo "BACKENDIP: ${BACKENDIP}"
-            echo "BACKENDNS: ${BACKENDDNS}"
-            echo "BACKENDIP: ${API_URL}"
-
-            pwd
-            ls -la
-            cat ~/project/backend/.env
-
-            echo "http://${BACKENDIP}:3030"
-            curl "http://${BACKENDIP}:3030/api/status"
-      - destroy-environment
-
-  smoke-test-frontend:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      # Checkout code from git
-      - checkout
-
-      - attach_workspace:
-          at: ~/project/
-
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-            apk add --update ansible
-            apk add --update tar gzip ansible nodejs npm curl jq
-            pip install awscli
-            #apk add --no-cache \
-            #python3 \
-            #py3-pip \
-            #&& pip3 install --upgrade pip \
-            #&& pip3 install \
-            #awscli \
-            #&& rm -rf /var/cache/apk/*
-            cd ~/project/frontend/
-            pwd
-            ls -la
-
-
-      - run:
-          name: Frontend smoke test.
-          command: |
-            # your code here
-            if curl -s  "http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com" | grep "Welcome"
-            then
-              echo "success!!"
-              return 0
-            else
-              echo "Fail!!"
-              return 1
-            fi
+                    # your code here
+                    # Fetch and prepare the BACKEND_IP env var
+                    if curl "${API_URL}/api/status" | grep "ok"
+                    then
+                        exit 0
+                    else
+                        exit 1
+                    fi
+            - run:
+                name: Frontend smoke test.
+                command: |
+                    # your code here
+                    sleep 60
+                    URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"            
+                    echo ${URL} 
+                    if curl -s ${URL} | grep "Welcome"
+                    then
+                        exit 0
+                    else
+                        exit 1
+                    fi
+            - destroy_environment
 
 workflows:
   default:
@@ -487,9 +443,7 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test-backend:
-          requires: [deploy-backend,deploy-frontend]
-      - smoke-test-frontend:
-          requires: [smoke-test-backend]
+      - smoke-test:
+                requires: [deploy-backend, deploy-frontend]
       - notify:
           context: slack-secrets
