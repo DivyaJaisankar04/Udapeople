@@ -235,15 +235,15 @@ jobs:
 
   run-migrations:
     docker:
-      - image: node:13.8-buster
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apt update
-            apt-get -y install curl
-            apt-get -y install awscli
+            sudo apt-get -y -qq update
+            sudo apt-get -y -qq install python3
+            sudo apt-get -qq install awscli
       - restore_cache:
           keys: [backend-build]
 
@@ -261,7 +261,7 @@ jobs:
       - run:
           name: Send migration results to kvdb
           command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            if grep -q "has been executed successfully." ~/project/backend/migrations.txt
             then
               curl https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
