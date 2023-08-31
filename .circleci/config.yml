@@ -213,7 +213,8 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["b0:ab:13:47:6a:42:74:43:00:96:b4:0f:b0:62:ec:c2"]
-      
+      - attach_workspace:
+          at: .circleci/ansible/
       - run:
           name: Install dependencies
           command: |
@@ -223,12 +224,9 @@ jobs:
             pwd
             ls -al ~/project/backend
             cat ~/project/.circleci/ansible/inventory.txt
-            
-      - attach_workspace:
-          at: ~/project/
 
       - run:
-          name: add values to backend/.env files
+          name: Run Playbook and Configure server
           no_output_timeout: 30m
           command: |
             cd ~/project/.circleci/ansible
