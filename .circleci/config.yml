@@ -322,13 +322,11 @@ jobs:
             apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
             
       - attach_workspace:
-          at: ~/project/
-      - restore_cache:
-          keys: [backend-build]
+          at: .circleci/ansible/
+
       - run:
           name: Deploy backend
           command: |
-            cd backend
             cd backend
             npm i
             npm run build
