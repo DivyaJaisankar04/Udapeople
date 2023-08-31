@@ -241,21 +241,17 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo apt-get -y -qq update
-            sudo apt-get -y -qq install python3
-            sudo apt-get -qq install awscli
+            sudo apt install -y tar gzip curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -qq awscliv2.zip
+            sudo ./aws/install
       - restore_cache:
           keys: [backend-build]
 
-      - attach_workspace:
-          at: ~/project/
       - run:
           name: Run migrations
           command: |
             cd backend
-            npm install
-            npm audit fix --audit-level=critical --force
-            npm run build
             npm run migrations >> migrations.txt
 
       - run:
@@ -263,7 +259,7 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations.txt
             then
-              curl https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              curl --insecure https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
       #- revert-migrations
       - destroy-environment
