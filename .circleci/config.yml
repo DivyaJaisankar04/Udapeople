@@ -266,36 +266,24 @@ jobs:
   deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
-      - image: python:3.7-alpine3.11
+      - image: python:3.7-alpine3.16
     steps:
       - checkout
-
-      - attach_workspace:
-          at: ~/project/
-
       - run:
           name: Install dependencies
           command: |
-            cd ~/project/frontend
-            apk add --no-cache nodejs
-            apk add --no-cache npm
-            apk add --no-cache bash
-            apk add --no-cache curl
-            pip install awscli
+            apk add --update --no-cache tar gzip nodejs npm aws-cli
 
       - run:
           name: Get backend url
           command: |
-            echo "PWD " $(pwd)
-            ls -la ~/project
-
-            cd ~/project/frontend
-            BACKENDIP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
-
-            BACKENDDNS=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
-
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --output text)
+            
             export API_URL="http://${BACKENDIP}:3030"
-            export API_DNS="http://${BACKENDDNS}:3030"
+            echo "API_URL = ${API_URL}"
             echo "API_URL=http://${BACKENDIP}:3030" >> frontend/.env
             cat ~/project/frontend/.env
       - restore_cache:
@@ -308,7 +296,8 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz.dist
           
-            aws s3 cp ~/project/frontend/dist s3://udapeople-"${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            aws s3 cp dist ~/project/frontend/dist s3://udapeople-"${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            
       # Here's where you will add some code to rollback on failure
       - destroy-environment
       - revert-migrations
@@ -316,31 +305,23 @@ jobs:
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
-      - image: python:3.7-alpine3.11
+      - image: python:3.7-alpine3.16
     steps:
       # Checkout code from git
       - checkout
       - add_ssh_keys:
           fingerprints: ["b0:ab:13:47:6a:42:74:43:00:96:b4:0f:b0:62:ec:c2"]
 
-
       - run:
           name: Install dependencies
           command: |
             # your code here
-            apk add --update ansible
-            pip install awscli
-            apk add --update nodejs npm
-            apk add --no-cache bash
-            apk add --update tar gzip ansible nodejs npm curl jq
-            apk add openssh-client
+            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
             
       - attach_workspace:
           at: ~/project/
       - restore_cache:
           keys: [backend-build]
-          
-      - run: cat ~/project/.circleci/ansible/inventory.txt
       - run:
           name: Deploy backend
           command: |
@@ -348,7 +329,7 @@ jobs:
             npm install
             npm run build
             cd ..
-            tar -c backend -czvf artifact.tar.gz
+            tar -C backend -czvf artifact.tar.gz
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
