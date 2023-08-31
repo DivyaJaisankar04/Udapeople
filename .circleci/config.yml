@@ -329,16 +329,17 @@ jobs:
           name: Deploy backend
           command: |
             cd backend
-            npm install --silent
-            npm run build 2>/dev/null
+            cd backend
+            npm i
+            npm run build
             cd ..
-            tar -C backend -czvf artifact.tar.gz
-            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
-            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            echo "Contents  of the inventory.txt file is -------"
             cd .circleci/ansible
-            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
-
-            ansible-playbook -i /root/project/.circleci/ansible/inventory.txt /root/project/.circleci/ansible/deploy-backend.yml
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+            #ansible-playbook -i /root/project/.circleci/ansible/inventory.txt /root/project/.circleci/ansible/deploy-backend.yml
       - destroy-environment
       - revert-migrations
   smoke-test:
