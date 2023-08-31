@@ -422,8 +422,32 @@ jobs:
             #aws cloudformation deploy --template-file /root/project/.circleci/files/cloudfront.yml --stack-name udapeople4795-cloudfront --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
 
       # Here's where you will add some code to rollback on failure
-      #- destroy-environment
-      #- revert-migrations
+      - destroy-environment
+      - revert-migrations
+
+  cleanup:
+    docker:
+      # Docker image here
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+
+      - run:
+          name: Get old stack workflow id and remove old stacks
+          command: |
+
+            export OLDWORKFLOWID=$(aws cloudformation list-exports --query "Exports[?Name=='WorkflowID'].Value" --no-paginate --output text)
+            echo "oldworkflowID: " ${OLDWORKFLOWID}
+
+            export MYSTACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+            echo "STACKS: " ${MYSTACKS}
+
+            if [[ "${MYSTACKS[@]}" =~ "${OLDWORKFLOWID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${OLDWORKFLOWID}" --recursive
+              aws cloudformation delete-stack --stack-name backend${OLDWORKFLOWID}
+              aws cloudformation delete-stack --stack-name frontend${OLDWORKFLOWID}
+            fi
 
 workflows:
   default:
@@ -452,5 +476,7 @@ workflows:
          # requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [deploy-backend, deploy-frontend]
+      - cleanup:
+                requires: [cloudfront-update]
       - notify:
           context: slack-secrets
