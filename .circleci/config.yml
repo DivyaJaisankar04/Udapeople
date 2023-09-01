@@ -31,16 +31,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            echo "Querying https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}"
-            SUCCESS=$(curl --insecure  https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            echo "Migration was $SUCCESS"
-            if [ "$SUCCESS" -eq "1" ]; 
-            then
-              echo "Reverting migration"
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi
+            
             echo "Querying bucket value https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}"
             SUCCESS=$(curl --insecure https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if[ "$SUCCESS" == "1" ];
