@@ -20,7 +20,8 @@ commands:
             aws cloudformation delete-stack --stack-name frontend${CIRCLE_WORKFLOW_ID:0:7}
             echo "${CIRCLE_WORKFLOW_ID:0:7}"
             echo "Destroyed !!"
-            #exit 1         
+            #exit 1  
+            
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
