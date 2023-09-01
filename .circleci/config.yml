@@ -31,25 +31,15 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            echo "Querying https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7}"
-            SUCCESS=$(curl --insecure  https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            echo "Migration was $SUCCESS"
-            if [ "$SUCCESS" -eq "1" ]; 
+            SUCCESS=$(curl --insecure https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            echo $SUCCESS
+            if(( $SUCCESS == 1 ));
             then
-              echo "Reverting migration"
               cd ~/project/backend
               npm install
-              npm run migration:revert
-            fi
-            #SUCCESS=$(curl --insecure https://kvdb.io/uoGdCbxst554z1wY1xXWK/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            #echo $SUCCESS
-            #if(( $SUCCESS==1 ));
-            #then
-              #cd ~/project/backend
-              #npm install
             #  Add revert code here. You can find this in the Getting Started section.
-              #npm run migrations:revert
-            #fi      
+              npm run migrations:revert
+            fi      
             
 jobs:
   notify:
