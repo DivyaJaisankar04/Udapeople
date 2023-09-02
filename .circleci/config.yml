@@ -502,7 +502,7 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
-              only: [master, dev-branch]
+              only: [master]
       - add-prometheus-node-exporter:
           requires: [deploy-infrastructure]
       - configure-infrastructure:
