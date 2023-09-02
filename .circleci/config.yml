@@ -252,17 +252,13 @@ jobs:
       #- restore_cache:
           #keys: [backend-build]
       - attach_workspace:
-          at: ~/
+          at: ~/project/backend
       - run:
           name: Run migrations
           command: |
             #cd backend
             #npm run migrations >> migrations_dump.txt
             #cat migrations_dump.txt
-            # Get DB host from AWS and add to env
-            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" --output text)
-            echo $TYPEORM_HOST
-            echo TYPEORM_HOST=$TYPEORM_HOST >> ~/project/backend/.env
             cd backend
             npm run migrations >> migrations_dump.txt
             cat migrations_dump.txt
